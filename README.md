@@ -1,3 +1,7 @@
+[![CI/CD](https://github.com/vertigis/workflow-activities-1integrate/workflows/CI/CD/badge.svg)](https://github.com/vertigis/workflow-activities-state-manager/actions)
+[![npm](https://img.shields.io/npm/v/@vertigis/workflow-activities-1integrate)](https://www.npmjs.com/package/@vertigis/workflow-activities-state-manager)
+
+
 # Workflow State Engine – Activity Pack
 
 A deterministic, policy‑enforcing workflow engine designed for **ArcGIS Enterprise + VertiGIS Studio Workflows**, used to implement **non‑bypassable business processes** such as Utility Network asset lifecycle management, permitting, inspections, and regulatory workflows.
@@ -93,9 +97,27 @@ Workflows are defined using JSON / JSONC configuration files.
   "processKey": "ASSET_RETIRE_MIDSTREAM_GAS",
   "startState": "INITIATE",
   "states": {
-    "INITIATE": { "type": "handler", "handler": "WF_State_InitiateRetire" },
-    "VALIDATE": { "type": "handler", "handler": "WF_State_ValidateRetireEligibility" },
-    "EXECUTE":  { "type": "handler", "handler": "WF_State_ExecuteRetirement" },
+    "INITIATE": { "type": "handler", "handler": "WF_State_InitiateRetire", "url": "https://url_to_workflow_handler" },
+    "VALIDATE": { "type": "handler", "handler": "WF_State_ValidateRetireEligibility", "url": "https://url_to_workflow_handler" },
+    "EXECUTE":  { "type": "handler", "handler": "WF_State_ExecuteRetirement", "url": "https://url_to_workflow_handler" },
     "END":      { "type": "terminal" }
   }
 }
+```
+### Register the 1Integrate activity pack
+
+1. Sign in to ArcGIS Online or Portal for ArcGIS
+1. Go to **My Content**
+1. Select **Add Item > An application**
+    - Type: `Web Mapping`
+    - Purpose: `Ready To Use`
+    - API: `JavaScript`
+    - URL: The URL to this activity pack manifest
+        - Use https://unpkg.com/@vertigis/workflow-activities-state-manager@1.0.0/activitypack.json for a specific version
+        - Use https://unpkg.com/@vertigis/workflow-activities-state-manager@1/activitypack.json for the latest revision of a specific major version
+        - Use https://unpkg.com/@vertigis/workflow-activities-state-manager/activitypack.json for the latest version (not recommended for production use)
+        - Use https://localhost:5000/activitypack.json for a local development version
+    - Title: Your desired title
+    - Tags: Must include `geocortex-workflow-activity-pack`
+1. Reload [VertiGIS Studio Workflow Designer](https://apps.vertigisstudio.com/workflow/designer/)
+1. The State Manager activities will now appear in the activity toolbox in a `State Manager` category
