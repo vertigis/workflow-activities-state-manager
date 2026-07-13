@@ -3,17 +3,13 @@ import { IActivityContext } from "@vertigis/workflow/IActivityHandler";
 import { MapProvider } from "@vertigis/workflow/activities/arcgis/MapProvider";
 import { activateTwo } from "@vertigis/workflow/Hooks";
 
-import { EngineConfig, runEngineOnce } from "../engine/engine";
+import { runEngineOnce } from "../engine/engine";
 import InvokeHandler from "./InvokeHandler";
 
 import WebMap from "@arcgis/core/WebMap";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import Graphic from "@arcgis/core/Graphic";
 import { ChannelProvider } from "@vertigis/workflow/activities/core/ChannelProvider";
-
-/* ================================
-   Inputs / Outputs
-================================ */
 
 export interface ResumeInstanceInputs {
     processKey: string;
@@ -145,8 +141,8 @@ export class ResumeInstance implements IActivityHandler {
         const result = await runEngineOnce({
             processKey: inputs.processKey,
             instanceId: inputs.instanceId,
-            tokenId: null,
-            initialVars: null,
+            tokenId: undefined,
+            initialVars: undefined,
             maxSteps: inputs.maxSteps ?? 50,
             config: inputs.configJson,
 

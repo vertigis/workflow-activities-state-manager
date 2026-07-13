@@ -26,7 +26,7 @@
         "start": "vertigis-workflow-sdk start",
         "lint": "eslint --max-warnings 0 --ext .ts,.tsx src/",
         "prettier": "prettier --write \"**/*.json\" \"**/*.js\" \"**/*.ts\" \"**/*.tsx\"",
-                "test": "jest",
+        "test": "jest",
         "test:watch": "jest --watch"
     },
     "devDependencies": {

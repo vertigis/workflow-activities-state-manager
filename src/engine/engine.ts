@@ -12,7 +12,7 @@ export interface HandlerResult {
             vars?: Record<string, any>; // shared vars delta
             branchVars?: Record<string, any>; // token-local vars delta (stored in token delta json)
             wait?: { reasonCode?: string; details?: any; resumeHint?: any };
-            nextState?: string | null;
+            nextState?: string | undefined;
             errors?: any[];
         }
     }
@@ -74,16 +74,16 @@ export interface TableMapping {
 
 export interface EngineRunArgs {
     processKey: string;
-    instanceId?: string | null;
-    tokenId?: string | null;
-    initialVars?: Record<string, any> | null;
+    instanceId?: string | undefined;
+    tokenId?: string | undefined;
+    initialVars?: Record<string, any> | undefined;
     maxSteps?: number;
 
     // Config can be object or string (optionally with comments)
     config: EngineConfig | string;
-    tokenLayer: FeatureLayer;
-    instanceLayer: FeatureLayer;
-    historyLayer: FeatureLayer;
+    tokenLayer: FeatureLayer | undefined;
+    instanceLayer: FeatureLayer | undefined;
+    historyLayer: FeatureLayer | undefined;
     tables: TableMapping;
     // Handler invoker must be provided by the activity (SDK-dependent).
     // It should execute the handler workflow/subworkflow by name and return the HandlerResult.
@@ -99,11 +99,11 @@ export interface EngineRunArgs {
 
 export interface EngineRunResult {
     instanceId: string;
-    tokenId: string | null;
+    tokenId: string | undefined;
     mode: EngineMode;
     status: string; // instance Status or token Status
     state: string; // current state name
-    outcome: string | null;
+    outcome: string | undefined;
     stepsExecuted: number;
 }
 
@@ -138,9 +138,9 @@ function parseConfig(config: EngineConfig | string): EngineConfig {
 }
 
 function isPlainObject(val: any): val is Record<string, any> {
-    if (val === null || typeof val !== "object") return false;
+    if (val === undefined || typeof val !== "object") return false;
     const proto = Object.getPrototypeOf(val);
-    return proto === Object.prototype || proto === null;
+    return proto === Object.prototype || proto === undefined;
 }
 
 /** Deep merge objects recursively. Arrays & non-objects replace. */
@@ -216,7 +216,7 @@ async function logHistorySafe(
     historyLayer: FeatureLayer | undefined,
     fields: ReturnType<typeof defaults>,
     instanceId: string,
-    tokenId: string | null,
+    tokenId: string | undefined,
     state: string,
     eventType: string,
     details: any
@@ -229,11 +229,12 @@ async function logHistory(
     logLayer: FeatureLayer,
     fields: ReturnType<typeof defaults>,
     instanceId: string,
-    tokenId: string | null,
+    tokenId: string | undefined,
     state: string,
     eventType: string,
     details: any
 ) {
+    if(!instanceId) return; // cannot log without instanceId
     const attrs: any = {};
     attrs[fields.historyInstanceIdField] = instanceId;
     attrs[fields.historyTokenIdField] = tokenId;
@@ -263,19 +264,20 @@ async function loadInstanceSafe(
 }
 
 
-async function loadInstance(instanceLayer: FeatureLayer, fields: ReturnType<typeof defaults>, instanceId: string) {
+async function loadInstance(instanceLayer: FeatureLayer | undefined, fields: ReturnType<typeof defaults>, instanceId: string) {
+    if (!instanceLayer || !instanceId) return undefined;
     const rows = await instanceLayer.queryFeatures({
         where: `${fields.instanceIdField}='${instanceId}'`,
         outFields: ["*"],
     });
-    return rows.features[0]?.attributes ?? null;
+    return rows.features[0]?.attributes ?? undefined;
 }
 
 async function loadTokenSafe(
     persist: boolean,
     tokenLayer: FeatureLayer | undefined,
     fields: ReturnType<typeof defaults>,
-    tokenId: string,
+    tokenId: string | undefined,
     memory: any
 ) {
     if (!persist) {
@@ -287,12 +289,13 @@ async function loadTokenSafe(
 
 
 
-async function loadToken(tokenLayer: FeatureLayer, fields: ReturnType<typeof defaults>, tokenId: string) {
+async function loadToken(tokenLayer: FeatureLayer | undefined, fields: ReturnType<typeof defaults>, tokenId: string | undefined) {
+    if (!tokenLayer || !tokenId) return undefined;
     const rows = await tokenLayer.queryFeatures({
         where: `${fields.tokenIdField}='${tokenId}'`,
         outFields: ["*"]
     });
-    return rows.features[0]?.attributes ?? null;
+    return rows.features[0]?.attributes ?? undefined;
 }
 
 
@@ -308,7 +311,8 @@ async function updateInstanceSafe(
 }
 
 
-async function updateInstance(instanceLayer: FeatureLayer, instanceObj: any, updates: any) {
+async function updateInstance(instanceLayer: FeatureLayer | undefined, instanceObj: any, updates: any) {
+    if (!instanceLayer) return;
     const updateGraphic = new Graphic(
         {
             attributes: { OBJECTID: instanceObj.OBJECTID, ...updates }
@@ -332,7 +336,8 @@ async function updateTokenSafe(
 }
 
 
-async function updateToken(tokenLayer: FeatureLayer, tokenObj: any, updates: any) {
+async function updateToken(tokenLayer: FeatureLayer | undefined, tokenObj: any, updates: any) {
+    if (!tokenLayer) return;
     const updateGraphic = new Graphic(
         {
             attributes: { OBJECTID: tokenObj.OBJECTID, ...updates }
@@ -369,15 +374,15 @@ async function spawnTokens(
         attrs[fields.tokenStatusField] = "Active";
         attrs[fields.joinGroupField] = joinStateName; // CRITICAL: join group must be join state name
         attrs[fields.tokenDeltaJsonField] = JSON.stringify(b.varsDelta ?? {});
-        attrs["Outcome"] = null;
-        attrs["LastError"] = null;
+        attrs["Outcome"] = undefined;
+        attrs["LastError"] = undefined;
 
         await tokenLayer.applyEdits(
             {
                 addFeatures: [new Graphic({ attributes: attrs })]
             });
 
-        await logHistorySafe(persist, historyLayer, fields, instanceId, null, b.state, "TOKEN_SPAWN", {
+        await logHistorySafe(persist, historyLayer, fields, instanceId, undefined, b.state, "TOKEN_SPAWN", {
             joinGroup: joinStateName,
             branchKey: b.branchKey,
             startState: b.state,
@@ -394,6 +399,7 @@ async function evaluateJoin(
     mode: "all" | "any" | "quorum",
     quorumN?: number
 ) {
+
     const rows = await tokenLayer.queryFeatures({
         where: `${fields.tokenInstanceIdField}='${instanceId}' AND ${fields.joinGroupField}='${joinGroup}'`,
         outFields: ["*"],
@@ -435,10 +441,10 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
         tables,
         invokeHandler,
         context,
-        persistState
+        persistState,
     } = args;
 
-    const persist = args.persistState !== false;
+    const persist = persistState !== false;
     const cfg = parseConfig(args.config);
 
     if (!persist) {
@@ -457,8 +463,8 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
     }
 
 
-    let memoryInstance: any = null;
-    let memoryToken: any = null;
+    let memoryInstance: any = undefined;
+    let memoryToken: any = undefined;
 
 
     if (!cfg?.states) {
@@ -467,22 +473,20 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
 
     const fields = defaults(tables);
 
-    let instanceId = args.instanceId ?? null;
-    const tokenId = tokenIdInput ?? null;
+    let instanceId = args.instanceId ?? guid();
+    const tokenId = tokenIdInput ?? undefined;
     const mode: EngineMode = tokenId ? "TOKEN" : "INSTANCE";
 
     //
     // 1) Load or create instance (only creates in instance mode)
     //
-    let instanceObj: any = null;
+    let instanceObj: any = undefined;
 
 
     if (!instanceId) {
         if (mode !== "INSTANCE") {
             throw new Error("Cannot create instance in TOKEN mode (instanceId required).");
         }
-
-        instanceId = guid();
 
         memoryInstance = {
             [fields.instanceIdField]: instanceId,
@@ -493,7 +497,7 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
             Iteration: 0,
         };
 
-        if (persist) {
+        if (persist && instanceLayer) {
             await instanceLayer.applyEdits({
                 addFeatures: [new Graphic({ attributes: memoryInstance })]
             });
@@ -531,7 +535,7 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
     //
     // 2) Load token if token mode
     //
-    let tokenObj: any = null;
+    let tokenObj: any = undefined;
     if (mode === "TOKEN") {
 
         tokenObj = await loadTokenSafe(
@@ -568,7 +572,7 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
     // 3) Main execution loop
     //
     let stepsExecuted = 0;
-    let lastOutcome: string | null = null;
+    let lastOutcome: string | undefined = undefined;
 
     while (stepsExecuted < maxSteps) {
         stepsExecuted++;
@@ -590,7 +594,7 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
                 [fields.statusField]: "Running",
             });
 
-            await logHistorySafe(persist, historyLayer, fields, instanceId, null, instanceObj[fields.currentStateField] as string, "INSTANCE_RESUME", {});
+            await logHistorySafe(persist, historyLayer, fields, instanceId, undefined, instanceObj[fields.currentStateField] as string, "INSTANCE_RESUME", {});
         }
 
         if (mode === "TOKEN" && tokenObj[fields.tokenStatusField] === "Waiting") {
@@ -640,7 +644,7 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
             currentStatus = instanceObj[fields.statusField];
 
             if (["Completed", "Failed", "Cancelled"].includes(currentStatus)) {
-                await logHistorySafe(persist, historyLayer, fields, instanceId, null, currentState, "INSTANCE_STOP", {
+                await logHistorySafe(persist, historyLayer, fields, instanceId, undefined, currentState, "INSTANCE_STOP", {
                     status: currentStatus,
                 });
                 break;
@@ -684,13 +688,13 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
                     [fields.tokenStateField]: currentState,
                     [fields.tokenStatusField]: "Completed",
                     Outcome: "DONE",
-                    LastError: null,
+                    LastError: undefined,
                 });
                 await logHistorySafe(persist, historyLayer, fields, instanceId, tokenId, currentState, "TOKEN_COMPLETED", {});
             } else {
                 await updateInstanceSafe(persist, instanceLayer, instanceObj, { [fields.statusField]: "Failed" });
 
-                await logHistorySafe(persist, historyLayer, fields, instanceId, null, currentState, "INSTANCE_COMPLETED", {});
+                await logHistorySafe(persist, historyLayer, fields, instanceId, undefined, currentState, "INSTANCE_COMPLETED", {});
             }
             break;
         }
@@ -698,7 +702,7 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
         //
         // JOIN (instance-only)
         //
-        if (stateDef.type === "join") {
+        if (stateDef.type === "join" && tokenLayer) {
             if (mode !== "INSTANCE") {
                 // Hard guard: join must never run in token mode
                 await updateTokenSafe(persist, tokenLayer, tokenObj, {
@@ -724,12 +728,12 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
                 stateDef.quorumN
             );
 
-            await logHistorySafe(persist, historyLayer, fields, instanceId, null, currentState, "JOIN_EVAL", joinInfo);
+            await logHistorySafe(persist, historyLayer, fields, instanceId, undefined, currentState, "JOIN_EVAL", joinInfo);
 
             if (joinInfo.failed > 0) {
                 // policy: fail instance; you can route to ERROR state if desired
                 await updateInstanceSafe(persist, instanceLayer, instanceObj, { [fields.statusField]: "Failed" });
-                await logHistorySafe(persist, historyLayer, fields, instanceId, null, currentState, "JOIN_FAILED", joinInfo);
+                await logHistorySafe(persist, historyLayer, fields, instanceId, undefined, currentState, "JOIN_FAILED", joinInfo);
                 break;
             }
 
@@ -741,13 +745,13 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
                     [fields.statusField]: "Running",
                 });
 
-                await logHistorySafe(persist, historyLayer, fields, instanceId, null, currentState, "JOIN_SATISFIED", { nextState });
+                await logHistorySafe(persist, historyLayer, fields, instanceId, undefined, currentState, "JOIN_SATISFIED", { nextState });
                 // continue loop to execute next state in same call
                 continue;
             } else {
                 // Not satisfied -> wait and exit
                 await updateInstanceSafe(persist, instanceLayer, instanceObj, { [fields.statusField]: "Waiting" });
-                await logHistorySafe(persist, historyLayer, fields, instanceId, null, currentState, "JOIN_WAIT", { joinGroup });
+                await logHistorySafe(persist, historyLayer, fields, instanceId, undefined, currentState, "JOIN_WAIT", { joinGroup });
                 break;
             }
         }
@@ -762,7 +766,7 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
         const handlerInput = {
             processKey,
             instanceId,
-            tokenId: mode === "TOKEN" ? tokenId : null,
+            tokenId: mode === "TOKEN" ? tokenId : undefined,
             state: currentState,
             vars: varsObj,
             parameters: stateDef.parameters ?? {},
@@ -800,14 +804,14 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
         if (mode === "TOKEN") {
             await updateTokenSafe(persist, tokenLayer, tokenObj, {
                 Outcome: handlerResult.result.output.outcome,
-                LastError: handlerResult.result.output.errors ? JSON.stringify(handlerResult.result.output.errors) : null,
+                LastError: handlerResult.result.output.errors ? JSON.stringify(handlerResult.result.output.errors) : undefined,
             });
         }
 
         await logHistorySafe(persist, historyLayer, fields, instanceId, tokenId, currentState, "STATE_EXIT", {
             outcome: handlerResult.result.output.outcome,
             wait: !!handlerResult.result.output.wait,
-            nextStateOverride: handlerResult.result.output.nextState ?? null,
+            nextStateOverride: handlerResult.result.output.nextState ?? undefined,
         });
 
         //
@@ -819,7 +823,7 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
                 await logHistorySafe(persist, historyLayer, fields, instanceId, tokenId, currentState, "TOKEN_WAIT", handlerResult.result.output.wait);
             } else {
                 await updateInstanceSafe(persist, instanceLayer, instanceObj, { [fields.statusField]: "Waiting" });
-                await logHistorySafe(persist, historyLayer, fields, instanceId, null, currentState, "INSTANCE_WAIT", handlerResult.result.output.wait);
+                await logHistorySafe(persist, historyLayer, fields, instanceId, undefined, currentState, "INSTANCE_WAIT", handlerResult.result.output.wait);
             }
             break;
         }
@@ -827,7 +831,7 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
         //
         // Resolve transition
         //
-        let resolved: any = null;
+        let resolved: any = undefined;
 
         if (handlerResult.result.output.nextState) {
             resolved = { type: "single", nextState: handlerResult.result.output.nextState };
@@ -870,7 +874,7 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
                         [fields.tokenStateField]: nextState,
                         [fields.tokenStatusField]: "Completed",
                         Outcome: "DONE",
-                        LastError: null,
+                        LastError: undefined,
                     });
                     await logHistorySafe(persist, historyLayer, fields, instanceId, tokenId, nextState, "TOKEN_COMPLETED", {
                         from: currentState,
@@ -880,7 +884,7 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
                         [fields.currentStateField]: nextState,
                         [fields.statusField]: "Completed",
                     });
-                    await logHistorySafe(persist, historyLayer, fields, instanceId, null, nextState, "INSTANCE_COMPLETED", {
+                    await logHistorySafe(persist, historyLayer, fields, instanceId, undefined, nextState, "INSTANCE_COMPLETED", {
                         from: currentState,
                     });
                 }
@@ -901,7 +905,7 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
                     [fields.currentStateField]: nextState,
                     [fields.statusField]: "Running",
                 });
-                await logHistorySafe(persist, historyLayer, fields, instanceId, null, currentState, "INSTANCE_TRANSITION", {
+                await logHistorySafe(persist, historyLayer, fields, instanceId, undefined, currentState, "INSTANCE_TRANSITION", {
                     to: nextState,
                     outcome: lastOutcome,
                 });
@@ -910,7 +914,7 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
             continue;
         }
 
-        if (resolved.type === "parallel") {
+        if (resolved.type === "parallel" && tokenLayer && historyLayer) {
             if (mode !== "INSTANCE") throw new Error("Parallel transition not supported in TOKEN mode");
 
             const joinState = resolved.join as string;
@@ -934,7 +938,7 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
                 [fields.currentStateField]: joinState,
                 [fields.statusField]: "Waiting",
             });
-            await logHistorySafe(persist, historyLayer, fields, instanceId, null, currentState, "PARALLEL_SPAWN", {
+            await logHistorySafe(persist, historyLayer, fields, instanceId, undefined, currentState, "PARALLEL_SPAWN", {
                 joinState,
                 branchCount: branches.length,
             });
@@ -1019,7 +1023,7 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
 
     return {
         instanceId: instanceId,
-        tokenId: null,
+        tokenId: undefined,
         mode,
         status: instanceObj[fields.statusField],
         state: instanceObj[fields.currentStateField],
