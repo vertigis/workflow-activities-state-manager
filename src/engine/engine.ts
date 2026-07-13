@@ -473,7 +473,7 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
 
     const fields = defaults(tables);
 
-    let instanceId = args.instanceId ?? guid();
+    let instanceId = args.instanceId ?? undefined;
     const tokenId = tokenIdInput ?? undefined;
     const mode: EngineMode = tokenId ? "TOKEN" : "INSTANCE";
 
@@ -484,6 +484,7 @@ export async function runEngineOnce(args: EngineRunArgs): Promise<EngineRunResul
 
 
     if (!instanceId) {
+        instanceId = guid();
         if (mode !== "INSTANCE") {
             throw new Error("Cannot create instance in TOKEN mode (instanceId required).");
         }
