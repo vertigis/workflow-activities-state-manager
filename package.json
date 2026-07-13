@@ -1,17 +1,33 @@
 {
     "name": "workflow-activities-state-manager",
-    "private": true,
-    "version": "1.0.0",
-    "description": "",
-    "license": "UNLICENSED",
-    "author": "",
+    
+    "version": "0.0.0-semantically-released",
+    "description": "A deterministic, policy‑enforcing workflow engine designed for VertiGIS Studio Workflows.",
+    "license": "MIT",
+    "author": "VertiGIS",
+        "homepage": "https://github.com/vertigis/workflow-activities-state-manager#readme",
+
     "type": "module",
+        "repository": {
+        "type": "git",
+        "url": "git+https://github.com/vertigis/workflow-activities-state-manager.git"
+    },
+ "keywords": [
+        "VertiGIS",
+        "Geocortex",
+        "Workflow",
+        "State Management",
+        "ArcGIS",
+        "GIS"
+    ],
     "scripts": {
         "build": "vertigis-workflow-sdk build",
         "generate": "vertigis-workflow-sdk generate",
         "start": "vertigis-workflow-sdk start",
-        "lint": "eslint --ext .ts,.tsx",
-        "prettier": "prettier --write \"**/*.json\" \"**/*.js\" \"**/*.ts\" \"**/*.tsx\""
+        "lint": "eslint --max-warnings 0 --ext .ts,.tsx src/",
+        "prettier": "prettier --write \"**/*.json\" \"**/*.js\" \"**/*.ts\" \"**/*.tsx\"",
+                "test": "jest",
+        "test:watch": "jest --watch"
     },
     "devDependencies": {
         "@vertigis/workflow": "5.50.0",
