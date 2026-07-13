@@ -3,6 +3,7 @@ import * as index from "./index";
 let mainResult: Promise<any> | undefined;
 
 export async function main(): Promise<any> {
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     if (mainResult) {
         return mainResult;
     }
