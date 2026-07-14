@@ -3,13 +3,12 @@ import { IActivityContext } from "@vertigis/workflow/IActivityHandler";
 import { MapProvider } from "@vertigis/workflow/activities/arcgis/MapProvider";
 import { activateTwo } from "@vertigis/workflow/Hooks";
 
-import { EngineConfig, HandlerResult, runEngineOnce } from "../engine/engine";
+import { HandlerResult, runEngineOnce } from "../engine/engine";
 import InvokeHandler from "./InvokeHandler";
 
 import WebMap from "@arcgis/core/WebMap";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import { ChannelProvider } from "@vertigis/workflow/activities/core/ChannelProvider";
-
 export interface RunStateEngineInputs {
     processKey: string;
     instanceId?: string;
@@ -24,7 +23,6 @@ export interface RunStateEngineInputs {
     instanceVarsJsonField?: string;
     tokenDeltaJsonField?: string;
 }
-
 export interface RunStateEngineOutputs {
     instanceId: string;
     tokenId?: string;
@@ -59,8 +57,6 @@ export class RunStateEngine implements IActivityHandler {
         }
 
         const persistState = inputs.persistState !== false;
-
-
         let instanceLayer: FeatureLayer | undefined;
         let tokenLayer: FeatureLayer | undefined;
         let historyLayer: FeatureLayer | undefined;
@@ -95,8 +91,6 @@ export class RunStateEngine implements IActivityHandler {
             }
         }
 
-
-
         const invokeHandlerByName: (url: string, handlerInputs: Record<string, any>) => Promise<HandlerResult> = async (
             url: string,
             handlerInputs: Record<string, any>,
@@ -113,12 +107,11 @@ export class RunStateEngine implements IActivityHandler {
             );
         }
 
-
         const result = await runEngineOnce({
             processKey: inputs.processKey,
-            instanceId: inputs.instanceId ?? null,
-            tokenId: inputs.tokenId ?? null,
-            initialVars: inputs.initialVars ?? null,
+            instanceId: inputs.instanceId ?? undefined,
+            tokenId: inputs.tokenId ?? undefined,
+            initialVars: inputs.initialVars ?? undefined,
             maxSteps: inputs.maxSteps ?? 50,
             config: inputs.configJson,
             instanceLayer,
@@ -132,7 +125,6 @@ export class RunStateEngine implements IActivityHandler {
             invokeHandler: invokeHandlerByName,
             context,
         });
-
 
         return {
             instanceId: result.instanceId,
