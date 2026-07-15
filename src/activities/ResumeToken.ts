@@ -11,17 +11,57 @@ import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import { ChannelProvider } from "@vertigis/workflow/activities/core/ChannelProvider";
 
 export interface RunStateEngineInputs {
+    /**
+     * @description The process key of the instance to resume.
+     * @required
+     */
     processKey: string;
+    /**
+     * @description The ID of the instance to resume.
+     * @required
+     */
     instanceId?: string;
+    /**
+     * @description The ID of the token to resume.
+     * @required
+     */
     tokenId?: string;
+    /**
+     * @description The initial variables for the state engine.
+     */
     initialVars?: any;
+    /**
+     * @description The maximum number of steps to execute before returning.
+     */
     maxSteps?: number;
+    /**
+     * @description The configuration JSON for the state engine.
+     * @required
+     */
     configJson: any;
-    instanceLayerId?: string;
-    tokenLayerId?: string;
-    historyLayerId?: string;
+    /**
+     * @description The ID of the instance table.
+     */
+    instanceTableId?: string;
+    /**
+     * @description The ID of the token table.
+     */
+    tokenTableId?: string;
+    /**
+     * @description The ID of the history table.
+     */
+    historyTableId?: string;
+    /**
+     * @description Whether to persist the state of the instance after resuming.
+     */
     persistState?: boolean;
+    /**
+     * @description The name of the field in the instance table that contains the instance variables JSON.
+     */
     instanceVarsJsonField?: string;
+    /**
+     * @description The name of the field in the token table that contains the token delta JSON.
+     */
     tokenDeltaJsonField?: string;
 }
 
@@ -67,9 +107,9 @@ export class ResumeToken implements IActivityHandler {
             throw new Error("ResumeToken requires persistState=true");
         }
 
-        if (!inputs.instanceLayerId || !inputs.tokenLayerId || !inputs.historyLayerId) {
+        if (!inputs.instanceTableId || !inputs.tokenTableId || !inputs.historyTableId) {
             throw new Error(
-                "instanceLayerId, tokenLayerId, and historyLayerId are required when resuming a token"
+                "instanceTableId, tokenTableId, and historyTableId are required when resuming a token"
             );
         }
 
@@ -81,18 +121,18 @@ export class ResumeToken implements IActivityHandler {
             throw new Error("map is required");
         }
 
-        const instanceLayer = map.findTableById(inputs.instanceLayerId) as FeatureLayer;
-        const tokenLayer = map.findTableById(inputs.tokenLayerId) as FeatureLayer;
-        const historyLayer = map.findTableById(inputs.historyLayerId) as FeatureLayer;
+        const instanceLayer = map.findTableById(inputs.instanceTableId) as FeatureLayer;
+        const tokenLayer = map.findTableById(inputs.tokenTableId) as FeatureLayer;
+        const historyLayer = map.findTableById(inputs.historyTableId) as FeatureLayer;
 
         if (!instanceLayer) {
-            throw new Error(`Instance layer not found: ${inputs.instanceLayerId}`);
+            throw new Error(`Instance table not found: ${inputs.instanceTableId}`);
         }
         if (!tokenLayer) {
-            throw new Error(`Token layer not found: ${inputs.tokenLayerId}`);
+            throw new Error(`Token table not found: ${inputs.tokenTableId}`);
         }
         if (!historyLayer) {
-            throw new Error(`History layer not found: ${inputs.historyLayerId}`);
+            throw new Error(`History table not found: ${inputs.historyTableId}`);
         }
 
         const invokeHandlerByName = async (
