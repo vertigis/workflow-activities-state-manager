@@ -4,7 +4,15 @@ import { ChannelProvider } from "@vertigis/workflow/activities/core/ChannelProvi
 import type { IActivityHandler } from "@vertigis/workflow";
 
 export interface InvokeHandlerInputs {
+    /**
+     * @description The URL of the Workflow to invoke.
+     * @required
+     */
     url: string,
+    /**
+     * @description The inputs to pass to the invoked Workflow.
+     * @required
+     */
     handlerInputs: Record<string, any>,
 }
 
