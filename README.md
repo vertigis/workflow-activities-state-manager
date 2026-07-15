@@ -1,5 +1,5 @@
-[![CI/CD](https://github.com/vertigis/workflow-activities-1integrate/workflows/CI/CD/badge.svg)](https://github.com/vertigis/workflow-activities-state-manager/actions)
-[![npm](https://img.shields.io/npm/v/@vertigis/workflow-activities-1integrate)](https://www.npmjs.com/package/@vertigis/workflow-activities-state-manager)
+[![CI/CD](https://github.com/vertigis/workflow-activities-state-manager/workflows/CI/CD/badge.svg)](https://github.com/vertigis/workflow-activities-state-manager/actions)
+[![npm](https://img.shields.io/npm/v/@vertigis/workflow-activities-state-manager)](https://www.npmjs.com/package/@vertigis/workflow-activities-state-manager)
 
 
 # Workflow State Engine – Activity Pack
