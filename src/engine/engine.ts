@@ -138,9 +138,9 @@ function parseConfig(config: EngineConfig | string): EngineConfig {
 }
 
 function isPlainObject(val: any): val is Record<string, any> {
-    if (val === undefined || typeof val !== "object") return false;
+    if (val === undefined || val === null || typeof val !== "object") return false;
     const proto = Object.getPrototypeOf(val);
-    return proto === Object.prototype || proto === undefined;
+    return proto === Object.prototype || proto === undefined || proto === null ;
 }
 
 /** Deep merge objects recursively. Arrays & non-objects replace. */
