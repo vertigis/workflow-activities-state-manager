@@ -104,7 +104,7 @@ Workflows are defined using JSON / JSONC configuration files.
   }
 }
 ```
-### Register the 1Integrate activity pack
+### Register the activity pack
 
 1. Sign in to ArcGIS Online or Portal for ArcGIS
 1. Go to **My Content**
