@@ -3,7 +3,7 @@ import { IActivityContext } from "@vertigis/workflow/IActivityHandler";
 import { MapProvider } from "@vertigis/workflow/activities/arcgis/MapProvider";
 import { activateTwo } from "@vertigis/workflow/Hooks";
 
-import { runEngineOnce } from "../engine/engine";
+import { runEngineOnce } from "../engine/engine2";
 import InvokeHandler from "./InvokeHandler";
 
 import WebMap from "@arcgis/core/WebMap";
@@ -59,10 +59,7 @@ export interface RunStateEngineInputs {
      * @description The name of the field in the instance table that contains the instance variables JSON.
      */
     instanceVarsJsonField?: string;
-    /**
-     * @description The name of the field in the token table that contains the token delta JSON.
-     */
-    tokenDeltaJsonField?: string;
+
 }
 
 export interface RunStateEngineOutputs {
@@ -73,6 +70,7 @@ export interface RunStateEngineOutputs {
     state: string;
     outcome?: string;
     stepsExecuted: number;
+    joinSatisfied?: boolean;
 }
 
 /**
@@ -167,7 +165,6 @@ export class ResumeToken implements IActivityHandler {
 
             tables: {
                 varsJsonField: inputs.instanceVarsJsonField ?? "VarsJson",
-                tokenDeltaJsonField: inputs.tokenDeltaJsonField ?? "ParamsDeltaJson",
             },
             invokeHandler: invokeHandlerByName,
             context,
@@ -179,8 +176,8 @@ export class ResumeToken implements IActivityHandler {
             mode: result.mode,
             status: result.status,
             state: result.state,
-            outcome: result.outcome ?? undefined,
             stepsExecuted: result.stepsExecuted,
+            joinSatisfied: result.joinSatisfied,
         };
     }
 }

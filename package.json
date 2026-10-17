@@ -32,6 +32,8 @@
     "devDependencies": {
         "@vertigis/workflow": "5.50.0",
         "@vertigis/workflow-sdk": "6.0.0",
+        "@vertigis/web": "^5.43.1",
+
         "prettier": "^3.3.1",
         "typescript": "^5.4.3"
     },
