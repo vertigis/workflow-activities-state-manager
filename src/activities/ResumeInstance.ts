@@ -3,7 +3,7 @@ import { IActivityContext } from "@vertigis/workflow/IActivityHandler";
 import { MapProvider } from "@vertigis/workflow/activities/arcgis/MapProvider";
 import { activateTwo } from "@vertigis/workflow/Hooks";
 
-import { runEngineOnce } from "../engine/engine2";
+import { runEngineOnce } from "../engine/engine";
 import InvokeHandler from "./InvokeHandler";
 
 import WebMap from "@arcgis/core/WebMap";
