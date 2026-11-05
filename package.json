@@ -30,17 +30,13 @@
         "test:watch": "jest --watch"
     },
     "devDependencies": {
-        "@vertigis/workflow": "5.50.0",
-        "@vertigis/workflow-sdk": "6.0.0",
+        "@vertigis/web": "^5.43.1",
+        "@vertigis/workflow": "5.53.0",
+        "@vertigis/workflow-sdk": "6.1.1",
         "prettier": "^3.3.1",
-        "typescript": "^5.4.3"
+        "typescript": "^5.4.3"        
     },
-    "overrides": {
-        "@vertigis/react-ui": {
-            "react": ">=18 <19",
-            "react-dom": ">=18 <19"
-        }
-    },
+
     "browserslist": [
         "last 2 chrome versions",
         "last 2 edge versions",
