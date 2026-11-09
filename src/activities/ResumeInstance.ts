@@ -51,10 +51,6 @@ export interface ResumeInstanceInputs {
      */
     instanceVarsJsonField?: string;
     /**
-     * @description The name of the field in the token table that contains the token delta JSON.
-     */
-    tokenDeltaJsonField?: string;
-    /**
      * @description Whether to persist the state of the instance after resuming.
      */
     persistState?: boolean;
@@ -66,7 +62,6 @@ export interface ResumeInstanceOutputs {
     state: string;
     stepsExecuted: number;
 }
-
 
 /**
  * @category State Engine
@@ -190,7 +185,6 @@ export class ResumeInstance implements IActivityHandler {
 
             tables: {
                 varsJsonField: inputs.instanceVarsJsonField ?? "VarsJson",
-                tokenDeltaJsonField: inputs.tokenDeltaJsonField ?? "ParamsDeltaJson",
             },
             invokeHandler: invokeHandlerByName,
             context,
